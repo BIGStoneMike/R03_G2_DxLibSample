@@ -67,7 +67,7 @@ BOOL KeyDown(int KEY_INPUT_)
 BOOL KeyUp(int KEY_INPUT_)
 {
 	if (
-		keyboard.AllKeyState[KEY_INPUT_] != 0			//以前は押していた
+		keyboard.OldAllKeyState[KEY_INPUT_] != 0			//以前は押していた
 		&& keyboard.AllKeyState[KEY_INPUT_] == 0		//現在は押していない
 		)
 	{
@@ -82,7 +82,7 @@ BOOL KeyUp(int KEY_INPUT_)
 BOOL KeyClick(int KEY_INPUT_)
 {
 	if (
-		keyboard.AllKeyState[KEY_INPUT_] != 0			//以前は押していた
+		keyboard.OldAllKeyState[KEY_INPUT_] != 0			//以前は押していた
 		&& keyboard.AllKeyState[KEY_INPUT_] == 0		//現在は押していない
 		)
 	{

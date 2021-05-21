@@ -1,7 +1,6 @@
 //FPSのソースファイル
 
 //ヘッダファイル読み込み
-#include"DxLib.h"
 #include"FPS.h"
 
 //グローバル変数
@@ -61,9 +60,12 @@ VOID FPSUpdate(void)
 /// </summary>
 VOID FPSDraw(VOID)
 {
-	//文字列を描画
-	DrawFormatString(0, 20, GetColor(0, 0, 0), "FPS : %.1f", fps.DrawValue);
-
+	if (GAME_DEBUG == TRUE)
+	{
+//文字列を描画
+	DrawFormatString(0, GAME_HEIGHT - 20, GetColor(0, 0, 0), "FPS : %.1f", fps.DrawValue);
+	}
+	
 	return;
 }
 

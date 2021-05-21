@@ -56,7 +56,7 @@ VOID FPSUpdate(void)
 }
 
 /// <summary>
-/// •½‹ÏFPS’l‚ðŽæ•`‰æ‚·‚é
+/// •½‹ÏFPS’l‚ð•`‰æ‚·‚é
 /// </summary>
 VOID FPSDraw(VOID)
 {

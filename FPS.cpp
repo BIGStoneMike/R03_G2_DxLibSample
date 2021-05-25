@@ -75,7 +75,7 @@ VOID FPSDraw(VOID)
 VOID FPSWait (VOID)
 {
 	//Œ»Ý‚ÌŽž-Å‰‚ÌŽž‚ÅAŒ»Ý‚©‚©‚Á‚Ä‚¢‚éŽž‚ðŽæ“¾‚·‚é
-	LONGLONG resultTime = fps.StartTime;
+	LONGLONG resultTime = fps.NowTime - fps.StartTime;
 
 	//‘Ò‚Â‚×‚«ƒ~ƒŠ•b”(‚P•b/FPS’l * Œ»Ý‚ÌƒtƒŒ[ƒ€”)‚©‚çAŒ»Ý‚©‚©‚Á‚Ä‚¢‚éŽž‚ðˆø‚­
 	int waitTime = 1000000.0f / fps.Value * fps.Count - resultTime;
@@ -87,7 +87,6 @@ VOID FPSWait (VOID)
 	if (waitTime > 0)
 	{
 		WaitTimer(waitTime);		//ˆø”ƒ~ƒŠ•b‘Ò‚Â
-		Sleep(1000);
 	}
 
 	//‚’¼“¯Šú‚ðON‚É‚µ‚Ä‚¢‚é‚©H
@@ -101,7 +100,8 @@ VOID FPSWait (VOID)
 			if (waitTime > 0
 				&& waitTime <= 1000.0f / fps.Value)
 			{
-				fps.Count++;
+				//fps.Count++;
+				fps.Value++;
 			}
 			else
 			{

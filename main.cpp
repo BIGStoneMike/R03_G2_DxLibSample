@@ -36,6 +36,16 @@ struct MOVIE
 	int Volume = 255;	//ボリューム(最小)0～255(最大)　
 };
 
+//音楽の構造体
+struct AUDIO
+{
+	int handle = -1;		//音楽のハンドル
+	char path[255];			//音楽のパス
+
+	int Volume = -1;		//ボリューム（MIN　0 ～ 255 MAX)
+	int playType = -1;
+};
+
 //グローバル変数
 //シーンを管理する変数
 GAME_SCENE GameScene;		//現在のゲームのシーン
@@ -50,6 +60,11 @@ CHARACTOR player;
 
 //ゴール
 CHARACTOR Goal;
+
+//音楽
+AUDIO TitleBGM;
+AUDIO PlayBGM;
+AUDIO EndBGM;
 
 //画面の切り替え
 BOOL IsFadeOut = FALSE;		//フェードアウト
@@ -94,6 +109,8 @@ BOOL OnCollRect(RECT a, RECT b);			//矩形と矩形の当たり判定
 
 BOOL GameLoad(VOID);	//ゲームのデータを読み込み
 VOID GameInit(VOID);	//ゲームのデータの初期化
+
+BOOL LoadAudio(AUDIO* audio, const char* path, int volume, int playType);		//ゲームの音楽の読み込み
 
 // プログラムは WinMain から始まります
 //Windowsのプログラミング方法 = (WinAPI)で動いている！
@@ -187,8 +204,8 @@ int WINAPI WinMain(
 			//現在のシーンが切り替え画面でないとき
 			if (GameScene != GAME_SCENE_CHANGE)
 			{
-				NextGameScene = GameScene;		//次のシーンを保存
-				GameScene = GAME_SCENE_CHANGE;	//画面切り替えシーンに変える
+				NextGameScene = GameScene;			//次のシーンを保存
+				GameScene = GAME_SCENE_CHANGE;		//画面切り替えシーンに変える
 			}
 		}
 
@@ -202,9 +219,13 @@ int WINAPI WinMain(
 	}
 
 	//終わるときの処理
-	DeleteGraph(playMovie.handle);	//動画をメモリ上から削除
-	DeleteGraph(player.handle);		//画像をメモリ上から削除
-	DeleteGraph(Goal.handle);		//画像をメモリ上から削除
+	DeleteGraph(playMovie.handle);		//動画をメモリ上から削除
+	DeleteGraph(player.handle);			//画像をメモリ上から削除
+	DeleteGraph(Goal.handle);			//画像をメモリ上から削除
+
+	DeleteSoundMem(TitleBGM.handle);		//音楽をメモリ上から削除
+	DeleteSoundMem(PlayBGM.handle);			//音楽をメモリ上から削除
+	DeleteSoundMem(EndBGM.handle);			//音楽をメモリ上から削除
 
 	//ＤＸライブラリ使用の終了処理
 	DxLib_End();
@@ -226,13 +247,13 @@ BOOL GameLoad(VOID)
 	if (playMovie.handle == -1)
 	{
 		MessageBox(
-			GetMainWindowHandle(),	//メインのウィンドウハンドル
-			playMovie.path,			//メッセージ本文
+			GetMainWindowHandle(),		//メインのウィンドウハンドル
+			playMovie.path,				//メッセージ本文
 			"動画読み込みエラー！",		//メッセージタイトル
-			MB_OK					//ボタン
+			MB_OK						//ボタン
 		);
 
-		return FALSE;	//読み込み失敗
+		return FALSE;		//読み込み失敗
 	}
 
 	//画像の幅と高さを取得
@@ -249,13 +270,13 @@ BOOL GameLoad(VOID)
 	if (player.handle == -1)
 	{
 		MessageBox(
-			GetMainWindowHandle(),	//メインのウィンドウハンドル
-			player.path,			//メッセージ本文
+			GetMainWindowHandle(),		//メインのウィンドウハンドル
+			player.path,				//メッセージ本文
 			"画像読み込みエラー！",		//メッセージタイトル
-			MB_OK					//ボタン
+			MB_OK						//ボタン
 		);
 
-		return FALSE;	//読み込み失敗
+		return FALSE;		//読み込み失敗
 	}
 
 	//画像の幅と高さを取得
@@ -285,14 +306,52 @@ BOOL GameLoad(VOID)
 		return FALSE;	//読み込み失敗
 	}
 
+	
+
 	//画像の幅と高さを取得
 	GetGraphSize(Goal.handle, &Goal.width, &Goal.height);
-
-
-
+	
+	//音楽を読み込む
+	if (!LoadAudio(&TitleBGM, ".\\Audio\\natsunokiri.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
+	if (!LoadAudio(&PlayBGM, ".\\Audio\\uzumaki.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
+	if (!LoadAudio(&EndBGM, ".\\Audio\\asaitsukiakari.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
+	
 	return TRUE;	//全て読み込みた！
 }
 
+/// <summary>
+/// 音楽をメモリに読み込む
+/// </summary>
+/// <param name="audio">Audio構造体変数のアドレス</param>
+/// <param name="path">Audioの音楽パス</param>
+/// <param name="volume">ボリューム</param>
+/// <param name="playType">DX_PLAYTYPE_LOOP or DX_PLAYTYPE_BACK</param>
+/// <returns></returns>
+BOOL LoadAudio(AUDIO* audio, const char* path, int volume, int playType)
+{
+	//音楽の読み込み
+	strcpyDx(audio->path, path);						//パスのコピー
+	audio->handle = LoadSoundMem(audio->path);			//音楽の読み込み
+
+	//音楽が読み込めなかったときは、エラー(-1)が入る
+	if (audio->handle == -1)
+	{
+		MessageBox(
+			GetMainWindowHandle(),			//メインのウィンドウハンドル
+			audio->path,						//メッセージ本文
+			"音楽読み込みエラー！",			//メッセージタイトル
+			MB_OK							//ボタン
+		);
+
+		return FALSE;	//読み込み失敗
+	}
+
+	//その他の設定
+	audio->Volume = volume;
+	audio->playType = playType;
+
+	return TRUE;
+}
 
 /// <summary>
 /// ゲームデータを初期化
@@ -351,6 +410,9 @@ VOID TitleProc(VOID)
 
 	if (KeyClick(KEY_INPUT_RETURN) == TRUE)
 	{
+		//BGMを止める
+		StopSoundMem(TitleBGM.handle);
+
 		//シーン切り替え
 		//次のシーンの初期化をここで行うと楽
 
@@ -359,6 +421,15 @@ VOID TitleProc(VOID)
 
 		//プレイ画面に切り替え
 		ChangeScene(GAME_SCENE_PLAY);
+
+		return;
+	}
+
+	//BGMが流れていないとき
+	if (CheckSoundMem(TitleBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(TitleBGM.handle, TitleBGM.playType);
 	}
 
 	return;
@@ -429,12 +500,24 @@ VOID PlayProc(VOID)
 	//プレイヤーがゴールに当たったときは
 	if (OnCollRect(player.coll, Goal.coll) == TRUE)
 	{
+		//BGMを止める
+		StopSoundMem(PlayBGM.handle);
+
 		//エンド画面に切り替え
 		ChangeScene(GAME_SCENE_END);
 
 		//処理を強制終了
 		return;
 	}
+
+
+	//BGMが流れていないとき
+	if (CheckSoundMem(PlayBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(PlayBGM.handle, PlayBGM.playType);
+	}
+
 
 	return;
 }
@@ -511,9 +594,23 @@ VOID EndProc(VOID)
 		//シーン切り替え
 		//次のシーンの初期化をここで行うと楽
 
+		//BGMを止める
+		StopSoundMem(EndBGM.handle);
+
 		//タイトル画面に切り替え
 		ChangeScene(GAME_SCENE_TITLE);
+
+		return;
 	}
+
+
+	//BGMが流れていないとき
+	if (CheckSoundMem(EndBGM.handle) == 0)
+	{
+		//BGMを流す
+		PlaySoundMem(EndBGM.handle, EndBGM.playType);
+	}
+
 
 	return;
 }

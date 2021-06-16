@@ -70,6 +70,7 @@ CHARACTOR Goal;
 IMAGE TitleLogo;		//タイトルロゴ
 IMAGE TitleEnter;		//エンターキーを押してね
 IMAGE EndClear;			//クリアロゴ
+IMAGE EndClearTwo;		//クリアロゴ２
 
 //音楽
 AUDIO TitleBGM;
@@ -95,6 +96,16 @@ int fadeOutCntMax = fadeTimeMax;	//フェードアウトのカウンタMAX
 int fadeInCntInit = fadeTimeMax;	//初期値
 int fadeInCnt = fadeInCntInit;		//フェードアウトのカウンタ
 int fadeInCntMax = fadeTimeMax;		//フェードアウトのカウンタMAX
+
+//PushEnterの点滅
+int PushEnterCnt = 0;				//カウンタ
+const int PushEnterCntMAX = 60;	//カウンタMAX値
+BOOL PushEnterBrink = FALSE;		//点滅しているか？
+
+//EndClearTwoの点滅
+int EndClearTwoCnt = 0;				//カウンタ
+const int EndClearTwoCntMAX = 60;	//カウンタMAX値
+BOOL EndClearTwoBrink = FALSE;		//点滅しているか？
 
 //プロトタイプ宣言
 VOID Title(VOID);		//タイトル画面
@@ -242,6 +253,7 @@ int WINAPI WinMain(
 	DeleteGraph(TitleLogo.handle);			//画像をメモリ上から削除
 	DeleteGraph(TitleEnter.handle);			//画像をメモリ上から削除
 	DeleteGraph(EndClear.handle);			//画像をメモリ上から削除
+	DeleteGraph(EndClearTwo.handle);			//画像をメモリ上から削除
 
 	DeleteSoundMem(TitleBGM.handle);		//音楽をメモリ上から削除
 	DeleteSoundMem(PlayBGM.handle);			//音楽をメモリ上から削除
@@ -292,6 +304,7 @@ BOOL GameLoad(VOID)
 	if (!LoadImageMem(&TitleLogo, ".\\Image\\TitleLogo.\png")) { return FALSE; }
 	if (!LoadImageMem(&TitleEnter, ".\\Image\\PushEnter.\png")) { return FALSE; }
 	if (!LoadImageMem(&EndClear, ".\\Image\\Clear.\png")) { return FALSE; }
+	if (!LoadImageMem(&EndClearTwo, ".\\Image\\ClearTwo.\png")) { return FALSE; }
 	
 	//音楽を読み込む
 	if (!LoadAudio(&TitleBGM, ".\\Audio\\natsunokiri.mp3", 255, DX_PLAYTYPE_LOOP)) { return FALSE; }
@@ -392,6 +405,33 @@ VOID GameInit(VOID)
 
 	//当たり判定を更新する
 	CollUpdate(&Goal);	//プレイヤーの当たり判定のアドレス
+
+	//タイトルロゴの位置を決める
+	TitleLogo.x = GAME_WIDTH / 2 - TitleLogo.width / 2;		//中央揃え
+	TitleLogo.y = 100;
+
+	//PushEnterの位置を決める
+	TitleEnter.x = GAME_WIDTH / 2 - TitleEnter.width / 2;		//中央揃え
+	TitleEnter.y = GAME_HEIGHT - TitleEnter.height - 100;
+
+	//PushEnterの点滅
+	PushEnterCnt = 0;			//カウンタ
+	//PushEnterCntMAX = 60;		//初期化しなくてよい
+	PushEnterBrink = FALSE;		//点滅しているか？
+
+	//EndClearTwoの点滅
+	EndClearTwoCnt = 0;			//カウンタ
+	//EndClear2CntMAX = 60;		//初期化しなくてよい
+	EndClearTwoBrink = FALSE;		//点滅しているか？
+
+	//クリアロゴの位置を決める
+	EndClear.x = GAME_WIDTH / 2 - EndClear.width / 2;		//中央揃え
+	EndClear.y = GAME_HEIGHT / 2 - EndClear.height / 2;		//中央揃え
+
+	//クリアロゴ2の位置を決める
+	EndClearTwo.x = GAME_WIDTH / 2 - EndClearTwo.width / 2;		//中央揃え
+	EndClearTwo.y = GAME_HEIGHT / 2 - EndClearTwo.height / 2;		//中央揃え
+
 }
 
 /// <summary>
@@ -456,6 +496,43 @@ VOID TitleProc(VOID)
 /// </summary>
 VOID TitleDraw(VOID)
 {
+	//タイトルロゴの描画
+	DrawGraph(TitleLogo.x, TitleLogo.y, TitleLogo.handle, TRUE);
+
+	//MAX値まで待つ
+	if (PushEnterCnt < PushEnterCntMAX) { PushEnterCnt++; }
+	else
+	{
+		if (PushEnterBrink == TRUE)PushEnterBrink = FALSE;
+		else if (PushEnterBrink == FALSE)PushEnterBrink = TRUE;
+
+		PushEnterCnt = 0;		//カウンタを初期化
+	}
+
+	//PushEnterを点滅
+	if(PushEnterBrink == TRUE)
+	{ 
+		//半透明にする
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, ((float)PushEnterCnt / PushEnterCntMAX) * 255);
+
+		//PushEnterの描画
+		DrawGraph(TitleEnter.x, TitleEnter.y, TitleEnter.handle, TRUE);
+
+		//半透明終了
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	if (PushEnterBrink == FALSE)
+	{
+		//半透明にする
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, ((float)(PushEnterCntMAX - PushEnterCnt) / PushEnterCntMAX) * 255);
+
+		//PushEnterの描画
+		DrawGraph(TitleEnter.x, TitleEnter.y, TitleEnter.handle, TRUE);
+
+		//半透明終了
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
 
 	DrawString(0, 0, "タイトル画面", GetColor(0, 0, 0));
 	return;
@@ -665,6 +742,44 @@ VOID EndProc(VOID)
 /// </summary>
 VOID EndDraw(VOID)
 {
+	//EndClearの描画
+	DrawGraph(EndClear.x, EndClear.y, EndClear.handle, TRUE);
+
+	//MAX値まで待つ
+	if (EndClearTwoCnt < EndClearTwoCntMAX) { EndClearTwoCnt++; }
+	else
+	{
+		if (EndClearTwoBrink == TRUE)EndClearTwoBrink = FALSE;
+		else if (EndClearTwoBrink == FALSE)EndClearTwoBrink = TRUE;
+
+		EndClearTwoCnt = 0;		//カウンタを初期化
+	}
+
+	//EndClearTwoを点滅
+	if (EndClearTwoBrink == TRUE)
+	{
+		//半透明にする
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, ((float)EndClearTwoCnt / EndClearTwoCntMAX) * 255);
+
+		//EndClearTwoの描画
+		DrawGraph(EndClearTwo.x, EndClearTwo.y, EndClearTwo.handle, TRUE);
+
+		//半透明終了
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	if (PushEnterBrink == FALSE)
+	{
+		//半透明にする
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, ((float)(EndClearTwoCntMAX - EndClearTwoCnt) / EndClearTwoCntMAX) * 255);
+
+		//PushEnterの描画
+		DrawGraph(EndClearTwo.x, EndClearTwo.y, EndClearTwo.handle, TRUE);
+
+		//半透明終了
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
 	DrawString(0, 0, "エンド画面", GetColor(0, 0, 0));
 	return;
 }
